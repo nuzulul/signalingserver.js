@@ -20,6 +20,7 @@ It use free public WebTorrent trackers as transport.
 * Mesh network
 * Chat
 * Multiplayer
+* P2P matchmaking
 
 ## Install
 
@@ -43,18 +44,24 @@ const config = {
 	appid : 'myApp'
 }
 
-//create new node
 const node = createSignalingServer(config);
 
-//signal handler
-node.data((signal)=>{
+node.data((signal,id)=>{
+
+	//handle signal
 	console.log(`receive signal : ${signal}`);
+
+	if(id){
+		//send answer signal to id
+		const msg = 'test answer';
+		node.send(msg,id);
+	}
+	
 });
 
-//broadcast signal
-const signal = 'test'; //example
-node.send(signal);
-console.log(`send signal : ${signal}`);
+//broadcast offer signal
+const msg = 'test offer';
+node.send(msg);
 ```
 
 ## API
@@ -63,22 +70,26 @@ console.log(`send signal : ${signal}`);
 
 Create new signaling server node
 
-Config : Parameter object 
+config : Parameter object 
 
-* appid = (string) Custom application name as identifier
-* tracker = (Array) Custom WebTorrent trackers list
+* appid = (string) Custom unique application ID
+* tracker = (Array) Custom WebTorrent tracker list
 
-### send
+### send(signal,id)
 
-Broadcast signal to all node
+Send signal to other node, leave out id paramater to broadcast.
 
-### data
+### data(callback)
 
-On receive signal handler
+On receive data handler.
+
+callback(signal,id)
+* type offer emit signal and sender id
+* type answer emit signal only
 
 ## Recomendation
 
-Encrypt the signal before broadcast it to prevent mitm.
+Encrypt the signal before send it to prevent appearing plaintext data in the network.
 
 ## See Also
 
@@ -86,4 +97,4 @@ Encrypt the signal before broadcast it to prevent mitm.
 
 ## License
 
-* [MIT](https://github.com/nuzulul/signaling.js/blob/main/LICENSE) - [Nuzulul Zulkarnain](https://github.com/nuzulul)
+* [MIT](https://github.com/nuzulul/signalingserver.js/blob/main/LICENSE) - [Nuzulul Zulkarnain](https://github.com/nuzulul)

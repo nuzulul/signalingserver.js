@@ -1,13 +1,13 @@
 /**
-* signalingserver.js by Nuzulul Zulkarnain
-* https://github.com/nuzulul/signalingserver.js
-**/
+ * signalingserver.js - Alternative signaling server that works in browser, no server required.
+ * https://github.com/nuzulul/signalingserver.js
+ * License MIT 2026 - Nuzulul Zulkarnain
+ */
 
 const defaultTrackers = [
 	'wss://tracker.webtorrent.dev',
 	'wss://tracker.openwebtorrent.com',
-	'wss://tracker.btorrent.xyz',
-	'wss://tracker.files.fm:7073/announce'
+	'wss://tracker.btorrent.xyz'
 ];
 const defaultAppId = 'global';
 const appName = 'signaling.js';
@@ -23,6 +23,7 @@ const createId = () => new Array(20).fill().map(()=>charSet[Math.floor(Math.rand
 const myid = createId();
 const encodeBytes = txt => new TextEncoder().encode(txt);
 let handledOffers = {}
+let handledAnswer = {}
 
 const createSignalingServer = (config={}) => {
 	
@@ -50,15 +51,15 @@ const createSignalingServer = (config={}) => {
 				.slice(0,hashLimit)
 		)
 		
-	const send = async (content) => {
+	const send = async (content,to_offer_id) => {
 		const infoHash = await createInfoHash;
 		const offer_id = createId()
 		config.tracker.forEach(async url => {
 			const socket = makeSocket(url,infoHash);
 			if(socket.readyState === WebSocket.OPEN){
-				announce(socket,infoHash,content,offer_id);
+				announce(socket,infoHash,content,offer_id,to_offer_id);
 			}else if(socket.readyState !== WebSocket.CONNECTING){
-				announce(await makeSocket(url,infoHash),infoHash,content,offer_id);
+				announce(await makeSocket(url,infoHash),infoHash,content,offer_id,to_offer_id);
 			}
 		})
 	}
@@ -78,24 +79,52 @@ const createSignalingServer = (config={}) => {
 		return sockets[url];
 	}
 	
-	const announce = async (socket,infoHash,content,offer_id) => 
-		socket.send(
-			JSON.stringify({
-				action : trackerAction,
-				info_hash: infoHash,
-				peer_id: myid,
-				numwant:offerPoolSize,
-				offers:[
-					{
-						offer:{
-							type: 'offer',
-							sdp:content
-						},
-						offer_id
+	const announce = async (socket,infoHash,content,offer_id,to_id) => {
+		
+		if(to_id){
+			
+			let id;
+			try{
+				id = JSON.parse(atob(to_id));
+			}catch(e){
+				console.warn(e);
+				return;
+			}
+			
+			socket.send(
+				JSON.stringify({
+					action : trackerAction,
+					info_hash : infoHash,
+					peer_id : myid,
+					to_peer_id : id.peer_id,
+					offer_id : id.offer_id,
+					answer : {
+						type : 'answer',
+						sdp :content
 					}
-				]
-			})
-		)
+				})
+			)
+			
+		} else {
+			socket.send(
+				JSON.stringify({
+					action : trackerAction,
+					info_hash : infoHash,
+					peer_id : myid,
+					numwant : offerPoolSize,
+					offers : [
+						{
+							offer : {
+								type : 'offer',
+								sdp : content
+							},
+							offer_id
+						}
+					]
+				})
+			)
+		}
+	}
 	
 	const onSocketMessage = async (socket,e) => {
 		const infoHash = await createInfoHash;
@@ -123,14 +152,32 @@ const createSignalingServer = (config={}) => {
 			return;
 		}
 		
-		if(handledOffers[val.offer_id]){
-			return;
-		}
-		
-		handledOffers[val.offer_id] = true;
+
 		
 		if(val.offer){
-			contentHandler(val.offer.sdp);
+			
+			if(handledOffers[val.offer_id]){
+				return;
+			}
+			
+			handledOffers[val.offer_id] = true;			
+			
+			const id = btoa(JSON.stringify({
+				offer_id : val.offer_id,
+				peer_id : val.peer_id
+			}))
+			contentHandler(val.offer.sdp, id);
+		}
+		
+		if(val.answer){
+			
+			if(handledAnswer[val.offer_id]){
+				return;
+			}
+			
+			handledAnswer[val.offer_id] = true;			
+			
+			contentHandler(val.answer.sdp);
 		}
 		
 		return;
