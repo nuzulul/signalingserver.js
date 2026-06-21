@@ -1,0 +1,29 @@
+{
+  "name": "signalingserver.js",
+  "version": "0.0.1",
+  "description": "Alternative signaling server that works in browser, no server required.",
+  "main": "signalingserver.js",
+  "module": "signalingserver.js",
+  "exports": {
+    ".": {
+      "import": "signalingserver.js"
+    }
+  },    
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nuzulul/signalingserver.js.git"
+  },
+  "keywords": [
+    "signaling",
+	"signaling server"
+  ],
+  "author": "Nuzulul Zulkarnain",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nuzulul/signalingserver.js/issues"
+  },
+  "homepage": "https://github.com/nuzulul/signalingserver.js#readme"
+}

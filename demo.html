@@ -1,0 +1,38 @@
+<html>
+<header>
+<title>signalingserver.js</title>
+</header>
+<body>
+<h3>Demo <a href="https://github.com/nuzulul/signalingserver.js">signalingserver.js</a></h3>
+<ul id="myList" style="overflow:scroll;height:70%;"></ul>
+<script type="module">
+import {createSignalingServer} from './signalingserver.js';
+
+const write = (input) => {
+	const node = document.createElement("li")
+	const textnode = document.createTextNode(input)
+	node.appendChild(textnode)
+	document.getElementById("myList").appendChild(node)
+	var objDiv = document.getElementById("myList");
+	objDiv.scrollTop = objDiv.scrollHeight;
+}
+
+const config = {
+	appid : 'demo signalingserver.js'
+}
+
+const node = createSignalingServer(config);
+node.data((signal)=>{
+	const status = `receive signal : ${signal}`;
+	write(status);
+})
+
+setInterval(()=>{
+	const signal = new Date().getTime(); //example signal
+	node.send(signal);
+	const status = `send signal : ${signal}`;
+	write(status);
+},5000)
+</script>
+</body>
+</html>
