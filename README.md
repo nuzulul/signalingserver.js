@@ -46,21 +46,21 @@ const config = {
 
 const node = createSignalingServer(config);
 
-node.data((signal,id)=>{
+node.data((signal,signal_id)=>{
 
 	//handle signal
 	console.log(`receive signal : ${signal}`);
 
-	if(id){
-		//send answer signal to id
-		const msg = 'test answer';
-		node.send(msg,id);
+	if(signal_id){
+		//send answer signal
+		const msg = 'answer signal';
+		node.send(msg,signal_id);
 	}
 	
 });
 
-//broadcast offer signal
-const msg = 'test offer';
+//broadcast signal
+const msg = 'offer signal';
 node.send(msg);
 ```
 
@@ -70,26 +70,24 @@ node.send(msg);
 
 Create new signaling server node
 
-config : Parameter object 
+config : configuration object 
 
 * appid = (string) Custom unique application ID
 * tracker = (Array) Custom WebTorrent tracker list
 
-### send(signal,id)
+### send(signal,signal_id)
 
-Send signal to other node, leave out id paramater to broadcast.
+Send signal to other node, leave out signal_id paramater to broadcast.
 
 ### data(callback)
 
-On receive data handler.
-
-callback(signal,id)
-* type offer emit signal and sender id
-* type answer emit signal only
+Listen for event with callback function containing parameter :
+* (signal,signal_id) - event from broadcaster offer
+* (signal) - event form other node answer
 
 ## Recomendation
 
-Encrypt the signal before send it to prevent appearing plaintext data in the network.
+Encrypt the signal before send it to prevent appearing plaintext data in the network logger.
 
 ## See Also
 

@@ -22,15 +22,15 @@ const config = {
 }
 
 const node = createSignalingServer(config);
-node.data((signal,id)=>{
+node.data((signal,signal_id)=>{
 
-	if(id){
+	if(signal_id){
 		//get offer
 		const getstatus = `receive offer : ${signal}`;
 		write(getstatus);
 		//send answer
 		const msg = new Date().getTime().toString();
-		node.send(msg,id);
+		node.send(msg,signal_id);
 		const sendstatus = `send answer : ${msg}`;
 		write(sendstatus);
 	}else{
@@ -44,7 +44,7 @@ node.data((signal,id)=>{
 setInterval(()=>{
 	const msg = new Date().getTime().toString();
 	node.send(msg);
-	const sendstatus = `send offer : ${msg}`;
+	const sendstatus = `broadcast offer : ${msg}`;
 	write(sendstatus);
 },5000)
 </script>
