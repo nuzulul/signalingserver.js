@@ -72,6 +72,10 @@ const createSignalingServer = (config={}) => {
 				socket.onopen = res.bind(null,socket);
 				socket.onmessage = e =>
 					values(socketListeners[url]).forEach(f => f(socket,e))
+				socket.onerror = e =>
+					delete sockets[url];
+				socket.onclose = e =>
+					delete sockets[url];
 			})
 		}else{
 			socketListeners[url][infoHash] = onSocketMessage;
