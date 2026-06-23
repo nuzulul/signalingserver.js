@@ -21,6 +21,7 @@ It use free public WebTorrent trackers as transport.
 * Chat
 * Multiplayer
 * P2P matchmaking
+* Synchronization
 
 ## Install
 
@@ -68,12 +69,12 @@ node.send(msg);
 
 ### createSignalingServer(config)
 
-Create new signaling server node
+Create new signaling server node.
 
-config : configuration object 
+config : optional configuration object. 
 
-* appid = (string) Custom unique application ID
-* tracker = (Array) Custom WebTorrent tracker list
+* appid = (string) custom unique application ID.
+* tracker = (array) custom WebTorrent tracker list.
 
 ### send(signal,signal_id)
 
@@ -82,12 +83,12 @@ Send signal to other node, leave out signal_id paramater to broadcast.
 ### data(callback)
 
 Listen for event with callback function containing parameter :
-* (signal,signal_id) - event from broadcaster offer
-* (signal) - event form other node answer
+* (signal,signal_id) - event from broadcaster offer.
+* (signal) - event form other node answer.
 
 ## Recomendation
 
-Encrypt the signal before send it to prevent appearing plaintext data in the network logger.
+Encrypt the signal before send it to prevent plaintext data appearing in the network logger.
 
 ## See Also
 
@@ -95,4 +96,4 @@ Encrypt the signal before send it to prevent appearing plaintext data in the net
 
 ## License
 
-* [MIT](https://github.com/nuzulul/signalingserver.js/blob/main/LICENSE) - [Nuzulul Zulkarnain](https://github.com/nuzulul)
+* [MIT](https://github.com/nuzulul/signalingserver.js/blob/main/LICENSE) (2026) [Nuzulul Zulkarnain](https://github.com/nuzulul)

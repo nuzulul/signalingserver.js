@@ -1,7 +1,7 @@
 /**
  * signalingserver.js - Alternative signaling server that works in browser, no server required.
  * https://github.com/nuzulul/signalingserver.js
- * License MIT 2026 - Nuzulul Zulkarnain
+ * License MIT - 2026 - Nuzulul Zulkarnain
  */
 
 const defaultTrackers = [
@@ -12,20 +12,21 @@ const defaultTrackers = [
 const defaultAppId = 'global';
 const appName = 'signaling.js';
 const hashLimit = 20;
-const sockets = {};
-const socketListeners = {};
 const trackerAction = 'announce';
 const intervalMs = 30000;
 const {values} = Object;
 const offerPoolSize = 10;
 const charSet = '0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz';
 const createId = () => new Array(20).fill().map(()=>charSet[Math.floor(Math.random() * charSet.length)]).join('');
-const myid = createId();
 const encodeBytes = txt => new TextEncoder().encode(txt);
-let handledOffers = {}
-let handledAnswer = {}
 
 const createSignalingServer = (config={}) => {
+	
+	const myid = createId();
+	const sockets = {};
+	const socketListeners = {};
+	const handledOffers = {};
+	const handledAnswer = {};	
 	
 	//use default appid if empty
 	if(!config.appid){
@@ -53,7 +54,7 @@ const createSignalingServer = (config={}) => {
 		
 	const send = async (content,to_offer_id) => {
 		const infoHash = await createInfoHash;
-		const offer_id = createId()
+		const offer_id = createId();
 		config.tracker.forEach(async url => {
 			const socket = makeSocket(url,infoHash);
 			if(socket.readyState === WebSocket.OPEN){
@@ -71,7 +72,7 @@ const createSignalingServer = (config={}) => {
 				const socket = new WebSocket(url);
 				socket.onopen = res.bind(null,socket);
 				socket.onmessage = e =>
-					values(socketListeners[url]).forEach(f => f(socket,e))
+					values(socketListeners[url]).forEach(f => f(socket,e));
 				socket.onerror = e =>
 					delete sockets[url];
 				socket.onclose = e =>
@@ -199,7 +200,7 @@ const createSignalingServer = (config={}) => {
 	const announceInterval = setInterval(auto, intervalMs);
 	auto();
 	
-	return {send,data}
+	return {send,data};
 	
 }
 
