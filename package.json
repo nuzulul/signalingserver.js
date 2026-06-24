@@ -1,6 +1,7 @@
 {
   "name": "signalingserver.js",
   "version": "0.0.4",
+  "type": "module",
   "description": "Alternative signaling server that works in browser, no server required.",
   "main": "signalingserver.js",
   "module": "signalingserver.js",
