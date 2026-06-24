@@ -15,7 +15,7 @@ const hashLimit = 20;
 const trackerAction = 'announce';
 const intervalMs = 30000;
 const {values} = Object;
-const offerPoolSize = 10;
+const offerPoolSize = 50;
 const charSet = '0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz';
 const createId = () => new Array(20).fill().map(()=>charSet[Math.floor(Math.random() * charSet.length)]).join('');
 const encodeBytes = txt => new TextEncoder().encode(txt);
@@ -52,15 +52,33 @@ const createSignalingServer = (config={}) => {
 				.slice(0,hashLimit)
 		)
 		
-	const send = async (content,to_offer_id) => {
+	const send = async (content,to_id) => {
+		
 		const infoHash = await createInfoHash;
-		const offer_id = createId();
+		if(to_id){
+			content = {
+						type : 'answer',
+						sdp :content
+					}
+		}else{
+			const sdp_id = createId();
+			content = new Array(offerPoolSize).fill().map(()=>{
+				const offer_id = createId();
+				return 	{
+							offer : {
+								type : 'offer',
+								sdp : JSON.stringify({sdp_id,content})
+							},
+							offer_id
+						}
+			})
+		}
 		config.tracker.forEach(async url => {
 			const socket = makeSocket(url,infoHash);
 			if(socket.readyState === WebSocket.OPEN){
-				announce(socket,infoHash,content,offer_id,to_offer_id);
+				announce(socket,infoHash,content,to_id);
 			}else if(socket.readyState !== WebSocket.CONNECTING){
-				announce(await makeSocket(url,infoHash),infoHash,content,offer_id,to_offer_id);
+				announce(await makeSocket(url,infoHash),infoHash,content,to_id);
 			}
 		})
 	}
@@ -84,7 +102,7 @@ const createSignalingServer = (config={}) => {
 		return sockets[url];
 	}
 	
-	const announce = async (socket,infoHash,content,offer_id,to_id) => {
+	const announce = async (socket,infoHash,content,to_id) => {
 		
 		if(to_id){
 			
@@ -103,10 +121,7 @@ const createSignalingServer = (config={}) => {
 					peer_id : myid,
 					to_peer_id : id.peer_id,
 					offer_id : id.offer_id,
-					answer : {
-						type : 'answer',
-						sdp :content
-					}
+					answer : content
 				})
 			)
 			
@@ -117,15 +132,7 @@ const createSignalingServer = (config={}) => {
 					info_hash : infoHash,
 					peer_id : myid,
 					numwant : offerPoolSize,
-					offers : [
-						{
-							offer : {
-								type : 'offer',
-								sdp : content
-							},
-							offer_id
-						}
-					]
+					offers : content
 				})
 			)
 		}
@@ -138,7 +145,7 @@ const createSignalingServer = (config={}) => {
 		try{
 			val = JSON.parse(e.data);
 		}catch(e){
-			console.warn(e);
+			//console.warn(e);
 			return;
 		}
 		
@@ -153,7 +160,7 @@ const createSignalingServer = (config={}) => {
 		
 		const failure = val['failure reason'];
 		if(failure){
-			console.warn(failure);
+			//console.warn(failure);
 			return;
 		}
 		
@@ -161,26 +168,29 @@ const createSignalingServer = (config={}) => {
 		
 		if(val.offer){
 			
-			if(handledOffers[val.offer_id]){
+			const sdp_id = JSON.parse(val.offer.sdp).sdp_id;
+			if(handledOffers[sdp_id]){
 				return;
 			}
 			
-			handledOffers[val.offer_id] = true;			
+			handledOffers[sdp_id] = true;			
 			
 			const id = btoa(JSON.stringify({
 				offer_id : val.offer_id,
 				peer_id : val.peer_id
 			}))
-			contentHandler(val.offer.sdp, id);
+			
+			const content = JSON.parse(val.offer.sdp).content;
+			contentHandler(content, id);
 		}
 		
 		if(val.answer){
 			
-			if(handledAnswer[val.offer_id]){
+			if(handledAnswer[val.peer_id+val.offer_id]){
 				return;
 			}
 			
-			handledAnswer[val.offer_id] = true;			
+			handledAnswer[val.peer_id+val.offer_id] = true;			
 			
 			contentHandler(val.answer.sdp);
 		}
