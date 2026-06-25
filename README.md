@@ -67,7 +67,7 @@ node.send(msg);
 
 ## API
 
-### createSignalingServer(config)
+### `node = createSignalingServer(config)`
 
 Create new signaling server node.
 
@@ -76,11 +76,11 @@ config : optional configuration object.
 * appid = (string) custom unique application ID.
 * tracker = (array) custom WebTorrent tracker list.
 
-### send(signal,signal_id)
+### `node.send(signal,signal_id)`
 
 Send signal to other node, leave out signal_id paramater to broadcast.
 
-### data(callback)
+### `node.data(callback)`
 
 Listen for event with callback function containing parameter :
 * (signal,signal_id) - event from broadcaster offer.
@@ -90,9 +90,9 @@ Listen for event with callback function containing parameter :
 
 Encrypt the signal before send it to prevent plaintext data appearing in the network logger.
 
-## See Also
+## Showcase
 
-* [webConnect.js](https://github.com/nuzulul/webConnect.js) - Auto WebRTC Mesh P2P Network without signaling server.
+* [p2p.js](https://github.com/nuzulul/p2p.js) - Build serverless peer to peer webapps powered by auto matchmaking WebRTC.
 
 ## License
 
