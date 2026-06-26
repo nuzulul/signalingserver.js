@@ -1,0 +1,8 @@
+title: signalingserver.js
+description: Alternative signaling server that works in browser, no server required.
+google_analytics: 
+show_downloads: false
+theme: jekyll-theme-slate
+
+gems:
+  - jekyll-mentions
