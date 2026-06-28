@@ -1,5 +1,5 @@
 # signalingserver.js
-Alternative signaling server that works in browser, no server required.
+signalingserver.js is an open source JavaScript library which provides solution for building a signaling server but works in the browser without requiring any server setup at all. It is designed as a low level signaling library that has basic level functionality. 
 
 [>DEMO<](https://nuzulul.github.io/signalingserver.js/demo.html)
 
@@ -8,6 +8,7 @@ Alternative signaling server that works in browser, no server required.
 * ✅ 0 Dependencies
 * ✅ No server required
 * ✅ Simple API
+* ✅ ESM support
 
 ## How does it works?
 
@@ -92,7 +93,7 @@ Encrypt the signal before send it to prevent plaintext data appearing in the net
 
 ## Showcase
 
-* [p2p.js](https://github.com/nuzulul/p2p.js) - Build serverless peer to peer webapps powered by auto matchmaking WebRTC.
+* [p2p.js](https://github.com/nuzulul/p2p.js) - Alternative simple api WebRTC library with auto matchmaking without signaling server.
 
 ## License
 
