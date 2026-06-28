@@ -12,7 +12,7 @@ signalingserver.js is an open source JavaScript library which provides solution 
 
 ## How does it works?
 
-It use free public WebTorrent trackers as transport.
+It use free public WebTorrent trackers as signal transport. Mainly WebTorrent clients use these trackers to share files via unique identifier called info hash but signalingserver.js use that info hash feature to share signal data. This make it as general purpose signaling network.
 
 ## Ideas
 
@@ -94,6 +94,10 @@ Encrypt the signal before send it to prevent plaintext data appearing in the net
 ## Showcase
 
 * [p2p.js](https://github.com/nuzulul/p2p.js) - Alternative simple api WebRTC library with auto matchmaking without signaling server.
+
+## See Also
+
+* [Signaling server](https://github.com/nuzulul/awesome-webrtc#signaling-server) - a collection of various signaling modules available out there.
 
 ## License
 
