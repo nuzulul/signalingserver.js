@@ -15,7 +15,7 @@ const hashLimit = 20;
 const trackerAction = 'announce';
 const intervalMs = 30000;
 const {values} = Object;
-const offerPoolSize = 50;
+const offerPoolSize = 25;
 const charSet = '0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz';
 const createId = () => new Array(20).fill().map(()=>charSet[Math.floor(Math.random() * charSet.length)]).join('');
 const encodeBytes = txt => new TextEncoder().encode(txt);
