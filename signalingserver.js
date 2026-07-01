@@ -42,7 +42,37 @@ const createSignalingServer = (config={}) => {
 	if(!config.tracker.length){
 		throw new Error(`Tracker list is empty`);
 	}
+	
+	let strategy = [
+		torrent(config)
+	]
+	
+	const send = (content,to_id) => {
+		strategy.forEach((item) => {
+			item.send(content,to_id);
+		})
+	}
+	
+	strategy.forEach((item) => {
+		item.data((content,id)=>{
+			contentHandler(content,id);
+		})
+	})
+	
+	let contentHandler = ()=>{};
+	const data = handle => (contentHandler = handle);	
+	
+	return {send,data};
+}
 
+const torrent = (config) => {
+	
+	const myid = createId();
+	const sockets = {};
+	const socketListeners = {};
+	const handledOffers = {};
+	const handledAnswer = {};	
+	
 	const createInfoHash = crypto.subtle
 		.digest('SHA-1', encodeBytes(`${appName}:${config.appid}`))	
 		.then(buffer => 
@@ -211,7 +241,6 @@ const createSignalingServer = (config={}) => {
 	auto();
 	
 	return {send,data};
-	
 }
 
 export default createSignalingServer;
