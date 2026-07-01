@@ -19,10 +19,11 @@ const offerPoolSize = 25;
 const charSet = '0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz';
 const createId = () => new Array(20).fill().map(()=>charSet[Math.floor(Math.random() * charSet.length)]).join('');
 const encodeBytes = txt => new TextEncoder().encode(txt);
+const handledContent = {};
+const myid = createId();
 
 const createSignalingServer = (config={}) => {
 	
-	const myid = createId();
 	const sockets = {};
 	const socketListeners = {};
 	const handledOffers = {};
@@ -44,12 +45,14 @@ const createSignalingServer = (config={}) => {
 	}
 	
 	let strategy = [
-		torrent(config)
+		torrent(config),
+		achex(config)
 	]
 	
 	const send = (content,to_id) => {
+		const content_id = createId();
 		strategy.forEach((item) => {
-			item.send(content,to_id);
+			item.send(content,content_id,to_id);
 		})
 	}
 	
@@ -82,13 +85,17 @@ const torrent = (config) => {
 				.slice(0,hashLimit)
 		)
 		
-	const send = async (content,to_id) => {
+	const send = async (content,content_id,to_id) => {
+		
+		if(to_id && JSON.parse(atob(to_id)).strategy !== 'torrent'){
+			return;
+		}
 		
 		const infoHash = await createInfoHash;
 		if(to_id){
 			content = {
 						type : 'answer',
-						sdp :content
+						sdp :JSON.stringify({content,content_id})
 					}
 		}else{
 			const sdp_id = createId();
@@ -97,7 +104,7 @@ const torrent = (config) => {
 				return 	{
 							offer : {
 								type : 'offer',
-								sdp : JSON.stringify({sdp_id,content})
+								sdp : JSON.stringify({sdp_id,content,content_id})
 							},
 							offer_id
 						}
@@ -194,9 +201,13 @@ const torrent = (config) => {
 			return;
 		}
 		
-
-		
 		if(val.offer){
+			
+			const content_id = JSON.parse(val.offer.sdp).content_id;
+			if(handledContent[content_id]){
+				return;
+			}
+			handledContent[content_id] = true;
 			
 			const sdp_id = JSON.parse(val.offer.sdp).sdp_id;
 			if(handledOffers[sdp_id]){
@@ -206,6 +217,7 @@ const torrent = (config) => {
 			handledOffers[sdp_id] = true;			
 			
 			const id = btoa(JSON.stringify({
+				strategy: 'torrent',
 				offer_id : val.offer_id,
 				peer_id : val.peer_id
 			}))
@@ -216,13 +228,19 @@ const torrent = (config) => {
 		
 		if(val.answer){
 			
+			const content_id = JSON.parse(val.answer.sdp).content_id;
+			if(handledContent[content_id]){
+				return;
+			}
+			handledContent[content_id] = true;			
+			
 			if(handledAnswer[val.peer_id+val.offer_id]){
 				return;
 			}
 			
 			handledAnswer[val.peer_id+val.offer_id] = true;			
-			
-			contentHandler(val.answer.sdp);
+			const content = JSON.parse(val.answer.sdp).content;
+			contentHandler(content);
 		}
 		
 		return;
@@ -239,6 +257,126 @@ const torrent = (config) => {
 	}
 	const announceInterval = setInterval(auto, intervalMs);
 	auto();
+	
+	return {send,data};
+}
+
+const achex = (config) => {
+	
+	const name = appName+'#'+config.appid;
+	
+	const url = 'wss://cloud.achex.ca';
+	
+	let sockets;
+	
+	let socketListeners;
+	
+	const makeSocket = (url) => {
+		if(!sockets){
+			socketListeners = onSocketMessage;
+			sockets = new Promise(res => {
+				const socket = new WebSocket(url);
+				socket.onopen = e => {
+					socket.send(JSON.stringify({
+						auth:myid,
+						passwd:"none"
+					}));
+				}
+				socket.onmessage = e => {
+					socketListeners(socket,e);
+					const val = JSON.parse(e.data);
+					if(val.auth === 'OK'){
+						socket.send(JSON.stringify({
+							joinHub:name
+						}));
+					}
+					if(val.joinHub === 'OK'){
+						res(socket);
+					}					
+				}
+				socket.onerror = e => {
+					sockets = undefined;
+					makeSocket(url);
+				}
+				socket.onclose = e => {
+					sockets = undefined;
+					makeSocket(url);
+				}
+			})
+		}
+		return sockets;
+	}	
+	
+	const onSocketMessage = (socket,e) => {
+		const val = JSON.parse(e.data);
+		
+		if(!val.msg){
+			return;
+		}
+		
+		const content_id = val.msg.content_id;
+		if(handledContent[content_id]){
+			return;
+		}
+		handledContent[content_id] = true;		
+		
+		if(val.msg.to_peer_id){
+			const id = JSON.parse(atob(val.msg.to_peer_id))
+			if(id.peer_id === myid){
+				const content = val.msg.content;
+				contentHandler(content);				
+			}
+		}else{
+			const id = btoa(JSON.stringify({
+				strategy: 'achex',
+				peer_id : val.msg.peer_id
+			}))
+			const content = val.msg.content;
+			contentHandler(content, id);			
+		}
+	}
+	
+	const send = async (content,content_id,to_id) => {
+		
+		const socket = await makeSocket(url);
+		if(socket.readyState === WebSocket.OPEN){
+			announce(socket,content,content_id,to_id);
+		}else if(socket.readyState !== WebSocket.CONNECTING){
+			announce(await makeSocket(url),content,content_id,to_id);
+		}
+		
+	}
+	
+	const announce = (socket,content,content_id,to_id) => {
+		
+		if(to_id){
+			content = {
+				content,
+				content_id,
+				peer_id : myid,
+				to_peer_id : to_id
+				
+			}			
+		}else{
+			content = {
+				content,
+				content_id,
+				peer_id : myid
+			}
+		}
+		
+		socket.send(JSON.stringify({
+			toH:name,
+			channel:"public",
+			msg:content
+		}))
+		
+	}
+	
+	makeSocket(url);
+	
+	let contentHandler = ()=>{};
+	const data = handle => (contentHandler = handle);	
 	
 	return {send,data};
 }
